@@ -1,9 +1,9 @@
 package point
 
 type Point struct {
-	x, y int
+	X, Y int
 }
 
 func New(x, y int) Point {
-	return Point{x: x, y: y}
+	return Point{X: x, Y: y}
 }

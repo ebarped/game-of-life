@@ -19,6 +19,7 @@ func main() {
 	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
 
 	g := game.New(BOARD_WIDTH, BOARD_HEIGHT)
+	_ = g
 	g.Init()
-	g.Play()
+	//g.Play()
 }
