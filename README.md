@@ -1,0 +1,4 @@
+- avanzar el juego al mover las flechas
+    - molaba el efecto de blink
+- con el espacio pone la celda a viva
+- una vez presione enter empieza el juego y ya se entra en el loop que actualiza

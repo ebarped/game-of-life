@@ -7,14 +7,15 @@ import (
 	"github.com/ebarped/game-of-life/pkg/point"
 )
 
-const (
-	EmptyCellRepr = "□"
-	FullCellRepr  = "▣"
-)
-
 type Board struct {
 	width, height int
 	cells         [][]cell.Cell
+	// we should use a structure to store the cells that allows getting a cell
+	// by its position fast! with this we have to loop over all the cells to find the cells with certain conditions..
+	// maybe a map[Point]Cell?
+	// 	- we can locate a cell by its point
+	//  - we are faster (map created in compile time and only accessed and modified in runtime)
+	//  -
 }
 
 func New(width, height int) Board {
@@ -22,10 +23,12 @@ func New(width, height int) Board {
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			p := point.New(x, y)
-			c := cell.New(p, true)
+			c := cell.New(p)
 			cells[x] = append(cells[x], c)
 		}
 	}
+	// select initial cell as starting point of the terminal cursor
+	cells[0][0].SetSelected(true)
 
 	return Board{width: width, height: height, cells: cells}
 }
@@ -47,11 +50,7 @@ func New(width, height int) Board {
 func (b Board) Render() {
 	for _, cells := range b.cells {
 		for _, cell := range cells {
-			if cell.IsAlive() {
-				fmt.Printf("%s ", FullCellRepr)
-			} else {
-				fmt.Printf("%s ", EmptyCellRepr)
-			}
+			fmt.Printf("%s ", cell)
 		}
 		fmt.Println()
 	}

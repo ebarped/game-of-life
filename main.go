@@ -1,15 +1,24 @@
 package main
 
 import (
-	"github.com/ebarped/game-of-life/pkg/board"
+	"os/exec"
+
+	"github.com/ebarped/game-of-life/pkg/game"
 )
 
 const (
-	BOARD_WIDTH  = 6
-	BOARD_HEIGHT = 6
+	BOARD_WIDTH  = 5
+	BOARD_HEIGHT = 5
 )
 
 func main() {
-	b := board.New(BOARD_WIDTH, BOARD_HEIGHT)
-	b.Render()
+
+	// input keystroke without pressing enter
+	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
+	// do not display entered characters on the screen
+	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
+
+	g := game.New(BOARD_WIDTH, BOARD_HEIGHT)
+	g.Init()
+	g.Play()
 }
