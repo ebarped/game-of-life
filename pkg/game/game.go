@@ -7,12 +7,17 @@ import (
 	"time"
 
 	"github.com/ebarped/game-of-life/pkg/board"
+	"github.com/ebarped/game-of-life/pkg/point"
 )
 
 const (
-	ENTER_CHAR    byte = 10
-	ESCAPE_CHAR   byte = 27
-	SPACEBAR_CHAR byte = 32
+	ENTER_CHAR       byte = 10
+	ESCAPE_CHAR      byte = 27
+	SPACEBAR_CHAR    byte = 32
+	ARROW_UP_CHAR    byte = 65
+	ARROW_DOWN_CHAR  byte = 66
+	ARROW_RIGHT_CHAR byte = 67
+	ARROW_LEFT_CHAR  byte = 68
 )
 
 type game struct {
@@ -27,25 +32,70 @@ func New(width, height int) game {
 func (g game) Init() {
 	clearScreen()
 
-	// get the point of the initially selected cell
+	// get the point of the currently selected cell, initially its (0,0)
+	selectedCellPoint := point.New(0, 0)
+
 	// on each arrow press, change the selected cell
 	// on spacebar, set that cell indexed by its point to alive/dead
 	// on enter, start the game
 
 	for {
 		g.board.Render()
-		displayInstructions()
+		g.displayInstructions()
 
 		keyPressed := readInput()
 		switch keyPressed {
 		case ESCAPE_CHAR:
 			_ = readInput() // skip the ] char
 			arrow := readInput()
-			fmt.Println("Pressed the arrow:", string(arrow))
+			switch arrow {
+			case ARROW_UP_CHAR:
+				newSelectedPoint := selectedCellPoint.GetNorth()
+				if !g.board.IsInside(newSelectedPoint) {
+					break
+				}
+				g.board.GetCell(selectedCellPoint).SetSelected(false)
+				selectedCellPoint = newSelectedPoint
+				g.board.GetCell(selectedCellPoint).SetSelected(true)
+
+			case ARROW_DOWN_CHAR:
+				newSelectedPoint := selectedCellPoint.GetSouth()
+				if !g.board.IsInside(newSelectedPoint) {
+					break
+				}
+				g.board.GetCell(selectedCellPoint).SetSelected(false)
+				selectedCellPoint = newSelectedPoint
+				g.board.GetCell(selectedCellPoint).SetSelected(true)
+
+			case ARROW_RIGHT_CHAR:
+				newSelectedPoint := selectedCellPoint.GetEast()
+				if !g.board.IsInside(newSelectedPoint) {
+					break
+				}
+				g.board.GetCell(selectedCellPoint).SetSelected(false)
+				selectedCellPoint = newSelectedPoint
+				g.board.GetCell(selectedCellPoint).SetSelected(true)
+
+			case ARROW_LEFT_CHAR:
+				newSelectedPoint := selectedCellPoint.GetWest()
+				if !g.board.IsInside(newSelectedPoint) {
+					break
+				}
+				g.board.GetCell(selectedCellPoint).SetSelected(false)
+				selectedCellPoint = newSelectedPoint
+				g.board.GetCell(selectedCellPoint).SetSelected(true)
+			default:
+				fmt.Println("error: key not recognized:", arrow)
+			}
 			clearScreen()
 		case SPACEBAR_CHAR:
+			c := g.board.GetCell(selectedCellPoint)
+			if c.IsAlive() {
+				c.SetAlive(false)
+			} else {
+				c.SetAlive(true)
+			}
 			clearScreen()
-			fmt.Println("Setting cell status to alive!")
 		case ENTER_CHAR:
 			fmt.Println("STARTING THE GAME!")
 			return
@@ -79,11 +129,14 @@ func (g game) Update() {
 
 }
 
-func displayInstructions() {
-	fmt.Println("---------------")
-	fmt.Println("Use the arrows to move through the board")
-	fmt.Println("Use <SPACEBAR> to set cells to ALIVE STATUS")
-	fmt.Println("Use <ENTER> to start the game")
+func (g game) displayInstructions() {
+	for i := 0; i < g.board.GetWidth()*2; i++ {
+		fmt.Printf("-")
+	}
+	fmt.Println()
+	fmt.Println("Use <ARROW> keys to move through the board")
+	fmt.Println("Use <SPACEBAR> key to set cells to ALIVE STATUS")
+	fmt.Println("Use <ENTER> key to start the game")
 }
 
 func clearScreen() {

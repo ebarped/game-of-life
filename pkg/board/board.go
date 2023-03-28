@@ -28,6 +28,7 @@ func New(width, height int) Board {
 	return Board{width: width, height: height, cells: cells}
 }
 
+// Render prints the game board
 func (b Board) Render() {
 	for y := 0; y < b.height; y++ {
 		for x := 0; x < b.width; x++ {
@@ -36,4 +37,28 @@ func (b Board) Render() {
 		}
 		fmt.Println()
 	}
+}
+
+// GetCell returns a pointer to a cell
+// implemented in order the cell field of Board can remain abstract to the clients
+func (b Board) GetCell(p point.Point) *cell.Cell {
+	return b.cells[p]
+}
+
+// IsInside returns true if the point is inside the the board
+func (b Board) IsInside(p point.Point) bool {
+	// check horizontal
+	if 0 > p.X || p.X > b.width-1 {
+		return false
+	}
+	// check vertical
+	if 0 > p.Y || p.Y > b.height-1 {
+		return false
+	}
+	return true
+}
+
+// GetWidth returns the width of the board
+func (b Board) GetWidth() int {
+	return b.width
 }
