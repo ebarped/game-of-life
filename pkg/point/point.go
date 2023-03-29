@@ -3,40 +3,48 @@ package point
 import "fmt"
 
 type Point struct {
-	X, Y int
+	x, y int
 }
 
 func New(x, y int) Point {
-	return Point{X: x, Y: y}
+	return Point{x: x, y: y}
 }
 
 func (p Point) String() string {
-	return fmt.Sprintf("(%d,%d)", p.X, p.Y)
+	return fmt.Sprintf("(%d,%d)", p.x, p.y)
 }
 
-func (p Point) GetNorth() Point {
+func (p Point) GetX() int {
+	return p.x
+}
+
+func (p Point) GetY() int {
+	return p.y
+}
+
+func (p Point) North() Point {
 	return Point{
-		X: p.X,
-		Y: p.Y - 1,
+		x: p.x,
+		y: p.y - 1,
 	}
 }
-func (p Point) GetSouth() Point {
+func (p Point) South() Point {
 	return Point{
-		X: p.X,
-		Y: p.Y + 1,
+		x: p.x,
+		y: p.y + 1,
 	}
 }
 
-func (p Point) GetEast() Point {
+func (p Point) East() Point {
 	return Point{
-		X: p.X + 1,
-		Y: p.Y,
+		x: p.x + 1,
+		y: p.y,
 	}
 }
 
-func (p Point) GetWest() Point {
+func (p Point) West() Point {
 	return Point{
-		X: p.X - 1,
-		Y: p.Y,
+		x: p.x - 1,
+		y: p.y,
 	}
 }

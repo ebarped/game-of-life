@@ -35,10 +35,6 @@ func (g game) Init() {
 	// get the point of the currently selected cell, initially its (0,0)
 	selectedCellPoint := point.New(0, 0)
 
-	// on each arrow press, change the selected cell
-	// on spacebar, set that cell indexed by its point to alive/dead
-	// on enter, start the game
-
 	for {
 		g.board.Render()
 		g.displayInstructions()
@@ -50,40 +46,53 @@ func (g game) Init() {
 			arrow := readInput()
 			switch arrow {
 			case ARROW_UP_CHAR:
-				newSelectedPoint := selectedCellPoint.GetNorth()
+				newSelectedPoint := selectedCellPoint.North()
 				if !g.board.IsInside(newSelectedPoint) {
 					break
 				}
-				g.board.GetCell(selectedCellPoint).SetSelected(false)
+				c := g.board.GetCell(selectedCellPoint)
+				c.SetSelected(false)
+				g.board.SetCell(c.Position(), c)
 				selectedCellPoint = newSelectedPoint
-				g.board.GetCell(selectedCellPoint).SetSelected(true)
-
+				c = g.board.GetCell(selectedCellPoint)
+				c.SetSelected(true)
+				g.board.SetCell(c.Position(), c)
 			case ARROW_DOWN_CHAR:
-				newSelectedPoint := selectedCellPoint.GetSouth()
+				newSelectedPoint := selectedCellPoint.South()
 				if !g.board.IsInside(newSelectedPoint) {
 					break
 				}
-				g.board.GetCell(selectedCellPoint).SetSelected(false)
+				c := g.board.GetCell(selectedCellPoint)
+				c.SetSelected(false)
+				g.board.SetCell(c.Position(), c)
 				selectedCellPoint = newSelectedPoint
-				g.board.GetCell(selectedCellPoint).SetSelected(true)
-
+				c = g.board.GetCell(selectedCellPoint)
+				c.SetSelected(true)
+				g.board.SetCell(c.Position(), c)
 			case ARROW_RIGHT_CHAR:
-				newSelectedPoint := selectedCellPoint.GetEast()
+				newSelectedPoint := selectedCellPoint.East()
 				if !g.board.IsInside(newSelectedPoint) {
 					break
 				}
-				g.board.GetCell(selectedCellPoint).SetSelected(false)
+				c := g.board.GetCell(selectedCellPoint)
+				c.SetSelected(false)
+				g.board.SetCell(c.Position(), c)
 				selectedCellPoint = newSelectedPoint
-				g.board.GetCell(selectedCellPoint).SetSelected(true)
-
+				c = g.board.GetCell(selectedCellPoint)
+				c.SetSelected(true)
+				g.board.SetCell(c.Position(), c)
 			case ARROW_LEFT_CHAR:
-				newSelectedPoint := selectedCellPoint.GetWest()
+				newSelectedPoint := selectedCellPoint.West()
 				if !g.board.IsInside(newSelectedPoint) {
 					break
 				}
-				g.board.GetCell(selectedCellPoint).SetSelected(false)
+				c := g.board.GetCell(selectedCellPoint)
+				c.SetSelected(false)
+				g.board.SetCell(c.Position(), c)
 				selectedCellPoint = newSelectedPoint
-				g.board.GetCell(selectedCellPoint).SetSelected(true)
+				c = g.board.GetCell(selectedCellPoint)
+				c.SetSelected(true)
+				g.board.SetCell(c.Position(), c)
 			default:
 				fmt.Println("error: key not recognized:", arrow)
 			}
@@ -95,8 +104,12 @@ func (g game) Init() {
 			} else {
 				c.SetAlive(true)
 			}
+			g.board.SetCell(c.Position(), c)
 			clearScreen()
 		case ENTER_CHAR:
+			c := g.board.GetCell(selectedCellPoint)
+			c.SetSelected(false)
+			g.board.SetCell(c.Position(), c)
 			fmt.Println("STARTING THE GAME!")
 			return
 		default:
@@ -106,16 +119,26 @@ func (g game) Init() {
 	}
 }
 
-func (g game) Play() {
-	fmt.Println("START")
-	for {
-		i := 0
+// Play starts the loop of the game
+func (g game) Play(updateInterval time.Duration) {
+	i := 0
 
-		g.board.Render()
-		time.Sleep(200 * time.Millisecond)
-		fmt.Println("iteration:", i)
+	clearScreen()
+
+	fmt.Println("iteration:", i)
+	fmt.Println("---------------")
+	g.board.Render()
+
+	for {
 		i++
+		clearScreen()
+		fmt.Println("iteration:", i)
 		fmt.Println("---------------")
+
+		g.board = g.board.Update()
+		g.board.Render()
+
+		time.Sleep(updateInterval)
 	}
 }
 
@@ -123,10 +146,6 @@ func readInput() byte {
 	keyPressed := make([]byte, 1)
 	os.Stdin.Read(keyPressed)
 	return keyPressed[0]
-}
-
-func (g game) Update() {
-
 }
 
 func (g game) displayInstructions() {

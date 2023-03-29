@@ -18,7 +18,6 @@ const (
 type Cell struct {
 	position   point.Point
 	isAlive    bool
-	neighbours int
 	isSelected bool
 }
 
@@ -41,9 +40,9 @@ func (c *Cell) SetAlive(alive bool) {
 	c.isAlive = alive
 }
 
-// MoveTo changes c position to p
-func (c *Cell) MoveTo(p point.Point) {
-	c.position = p
+// Position returns the position of the cell
+func (c Cell) Position() point.Point {
+	return c.position
 }
 
 // String allows pretty printing of the Cell
