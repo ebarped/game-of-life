@@ -18,6 +18,7 @@ const (
 	ARROW_DOWN_CHAR  byte = 66
 	ARROW_RIGHT_CHAR byte = 67
 	ARROW_LEFT_CHAR  byte = 68
+	PAUSE_CHAR       byte = 112
 )
 
 type game struct {
@@ -37,7 +38,7 @@ func (g game) Init() {
 
 	for {
 		g.board.Render()
-		g.displayInstructions()
+		g.displayInitInstructions()
 
 		keyPressed := readInput()
 		switch keyPressed {
@@ -121,24 +122,47 @@ func (g game) Init() {
 
 // Play starts the loop of the game
 func (g game) Play(updateInterval time.Duration) {
+	runGame := true
 	i := 0
+
+	// get input while game is running
+	userInput := make(chan int)
+	go readInputWhilePlaying(userInput)
 
 	clearScreen()
 
 	fmt.Println("iteration:", i)
 	fmt.Println("---------------")
 	g.board.Render()
+	g.displayInstructions()
 
 	for {
-		i++
-		clearScreen()
-		fmt.Println("iteration:", i)
-		fmt.Println("---------------")
+		select {
+		case input := <-userInput:
+			if input == int(PAUSE_CHAR) {
+				runGame = !runGame // flip rungame state
+			}
+		case <-time.After(updateInterval):
+			if runGame {
+				i++
+				clearScreen()
+				fmt.Println("iteration:", i)
+				fmt.Println("---------------")
 
-		g.board = g.board.Update()
-		g.board.Render()
+				g.board = g.board.Update()
+				g.board.Render()
+				g.displayInstructions()
+			}
+		}
+	}
+}
 
-		time.Sleep(updateInterval)
+// readInputWhilePlaying is intented to run as goroutine to catch the user input
+func readInputWhilePlaying(input chan<- int) {
+	for {
+		keyPressed := make([]byte, 1)
+		os.Stdin.Read(keyPressed)
+		input <- int(keyPressed[0])
 	}
 }
 
@@ -148,7 +172,7 @@ func readInput() byte {
 	return keyPressed[0]
 }
 
-func (g game) displayInstructions() {
+func (g game) displayInitInstructions() {
 	for i := 0; i < g.board.GetWidth()*2; i++ {
 		fmt.Printf("-")
 	}
@@ -156,6 +180,14 @@ func (g game) displayInstructions() {
 	fmt.Println("Use <ARROW> keys to move through the board")
 	fmt.Println("Use <SPACEBAR> key to set cells to ALIVE STATUS")
 	fmt.Println("Use <ENTER> key to start the game")
+}
+
+func (g game) displayInstructions() {
+	for i := 0; i < g.board.GetWidth()*2; i++ {
+		fmt.Printf("-")
+	}
+	fmt.Println()
+	fmt.Println("Press <p> to pause the game")
 }
 
 func clearScreen() {

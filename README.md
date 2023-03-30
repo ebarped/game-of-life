@@ -1,2 +1,7 @@
+# Game of Life
+Game of Life implementation in Go using stdlib only.
 
-- molaba el efecto de blink en la celda seleccionada
+## TODO
+- blink effect on selected cell
+- "infinite board"
+- allow to pause with "p" input

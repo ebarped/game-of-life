@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	BOARD_WIDTH     = 5
-	BOARD_HEIGHT    = 5
-	UPDATE_INTERVAL = 500 * time.Millisecond
+	BOARD_WIDTH     = 10
+	BOARD_HEIGHT    = 10
+	UPDATE_INTERVAL = 200 * time.Millisecond
 )
 
 func main() {
