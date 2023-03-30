@@ -126,8 +126,8 @@ func (g game) Play(updateInterval time.Duration) {
 	i := 0
 
 	// get input while game is running
-	userInput := make(chan int)
-	go readInputWhilePlaying(userInput)
+	userInput := make(chan byte, 1)
+	go handlePause(userInput)
 
 	clearScreen()
 
@@ -138,10 +138,8 @@ func (g game) Play(updateInterval time.Duration) {
 
 	for {
 		select {
-		case input := <-userInput:
-			if input == int(PAUSE_CHAR) {
-				runGame = !runGame // flip rungame state
-			}
+		case <-userInput:
+			runGame = !runGame // flip rungame state
 		case <-time.After(updateInterval):
 			if runGame {
 				i++
@@ -157,12 +155,14 @@ func (g game) Play(updateInterval time.Duration) {
 	}
 }
 
-// readInputWhilePlaying is intented to run as goroutine to catch the user input
-func readInputWhilePlaying(input chan<- int) {
+// handlePause is intented to run as goroutine to catch the user pause input
+func handlePause(input chan<- byte) {
 	for {
 		keyPressed := make([]byte, 1)
 		os.Stdin.Read(keyPressed)
-		input <- int(keyPressed[0])
+		if keyPressed[0] == PAUSE_CHAR {
+			input <- keyPressed[0]
+		}
 	}
 }
 
