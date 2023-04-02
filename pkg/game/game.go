@@ -29,8 +29,8 @@ func New(width, height int) game {
 	return game{board: board.New(width, height)}
 }
 
-// Init lets the user to select the alive cells and the initial conditions before going to play
-func (g game) Init() {
+// init lets the user set the initial conditions before starting the game
+func (g game) init() {
 	clearScreen()
 
 	// get the point of the currently selected cell, initially its (0,0)
@@ -122,6 +122,9 @@ func (g game) Init() {
 
 // Play starts the loop of the game
 func (g game) Play(updateInterval time.Duration) {
+
+	g.init()
+
 	runGame := true
 	i := 0
 
@@ -140,6 +143,18 @@ func (g game) Play(updateInterval time.Duration) {
 		select {
 		case <-userInput:
 			runGame = !runGame // flip rungame state
+
+			if runGame { // when resuming the game, render immediately, dont wait the "updateInterval" until next cycle
+				i++
+				clearScreen()
+				fmt.Println("iteration:", i)
+				fmt.Println("---------------")
+
+				g.board = g.board.Update()
+				g.board.Render()
+				g.displayInstructions()
+			}
+
 		case <-time.After(updateInterval):
 			if runGame {
 				i++

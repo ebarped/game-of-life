@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	BOARD_WIDTH     = 10
-	BOARD_HEIGHT    = 10
-	UPDATE_INTERVAL = 200 * time.Millisecond
+	BOARD_WIDTH     = 15
+	BOARD_HEIGHT    = 15
+	UPDATE_INTERVAL = 400 * time.Millisecond
 )
 
 func main() {
@@ -20,6 +20,5 @@ func main() {
 	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
 
 	g := game.New(BOARD_WIDTH, BOARD_HEIGHT)
-	g.Init()
 	g.Play(UPDATE_INTERVAL)
 }
