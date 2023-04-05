@@ -20,5 +20,5 @@ func main() {
 	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
 
 	g := game.New(BOARD_WIDTH, BOARD_HEIGHT)
-	g.Play(UPDATE_INTERVAL)
+	g.Init(UPDATE_INTERVAL)
 }
