@@ -19,6 +19,7 @@ const (
 	ARROW_RIGHT_CHAR byte = 67
 	ARROW_LEFT_CHAR  byte = 68
 	PAUSE_CHAR       byte = 112
+	RESTART_CHAR     byte = 114
 )
 
 type game struct {
@@ -29,9 +30,13 @@ func New(width, height int) game {
 	return game{board: board.New(width, height)}
 }
 
-// init lets the user set the initial conditions before starting the game
-func (g game) init() {
+// Init shows the main menu and allows the user to start the game
+func (g game) Init(updateInterval time.Duration) {
 	clearScreen()
+
+	// get input while game is running
+	userInput := make(chan byte)
+	go handleInput(userInput)
 
 	// get the point of the currently selected cell, initially its (0,0)
 	selectedCellPoint := point.New(0, 0)
@@ -40,12 +45,13 @@ func (g game) init() {
 		g.board.Render()
 		g.displayInitInstructions()
 
-		keyPressed := readInput()
+		keyPressed := <-userInput
+
 		switch keyPressed {
 		case ESCAPE_CHAR:
-			_ = readInput() // skip the ] char
-			arrow := readInput()
-			switch arrow {
+			_ = <-userInput // skip the ] char
+			input := <-userInput
+			switch input {
 			case ARROW_UP_CHAR:
 				newSelectedPoint := selectedCellPoint.North()
 				if !g.board.IsInside(newSelectedPoint) {
@@ -95,7 +101,7 @@ func (g game) init() {
 				c.SetSelected(true)
 				g.board.SetCell(c.Position(), c)
 			default:
-				fmt.Println("error: key not recognized:", arrow)
+				fmt.Println("error: key not recognized:", input)
 			}
 			clearScreen()
 		case SPACEBAR_CHAR:
@@ -111,8 +117,15 @@ func (g game) init() {
 			c := g.board.GetCell(selectedCellPoint)
 			c.SetSelected(false)
 			g.board.SetCell(c.Position(), c)
-			fmt.Println("STARTING THE GAME!")
-			return
+
+			g.play(updateInterval, userInput)
+			clearScreen()
+
+			//restart game
+			g.board = board.New(g.board.GetWidth(), g.board.GetHight())
+			selectedCellPoint = point.New(0, 0)
+			//
+
 		default:
 			clearScreen()
 			fmt.Printf("Unrecognized key, skipping it: %s (%d)\n", string(keyPressed), keyPressed)
@@ -120,17 +133,11 @@ func (g game) init() {
 	}
 }
 
-// Play starts the loop of the game
-func (g game) Play(updateInterval time.Duration) {
-
-	g.init()
+// play starts the loop of the game
+func (g game) play(updateInterval time.Duration, userInput chan byte) {
 
 	runGame := true
 	i := 0
-
-	// get input while game is running
-	userInput := make(chan byte, 1)
-	go handlePause(userInput)
 
 	clearScreen()
 
@@ -141,8 +148,13 @@ func (g game) Play(updateInterval time.Duration) {
 
 	for {
 		select {
-		case <-userInput:
-			runGame = !runGame // flip rungame state
+		case input := <-userInput:
+			switch input {
+			case PAUSE_CHAR:
+				runGame = !runGame // flip rungame state
+			case RESTART_CHAR:
+				return
+			}
 
 			if runGame { // when resuming the game, render immediately, dont wait the "updateInterval" until next cycle
 				i++
@@ -170,21 +182,13 @@ func (g game) Play(updateInterval time.Duration) {
 	}
 }
 
-// handlePause is intented to run as goroutine to catch the user pause input
-func handlePause(input chan<- byte) {
+// handleInput is intented to run as goroutine to catch the user input (pause or restart)
+func handleInput(input chan<- byte) {
 	for {
 		keyPressed := make([]byte, 1)
 		os.Stdin.Read(keyPressed)
-		if keyPressed[0] == PAUSE_CHAR {
-			input <- keyPressed[0]
-		}
+		input <- keyPressed[0]
 	}
-}
-
-func readInput() byte {
-	keyPressed := make([]byte, 1)
-	os.Stdin.Read(keyPressed)
-	return keyPressed[0]
 }
 
 func (g game) displayInitInstructions() {
@@ -203,6 +207,7 @@ func (g game) displayInstructions() {
 	}
 	fmt.Println()
 	fmt.Println("Press <p> to pause the game")
+	fmt.Println("Press <r> to restart the game")
 }
 
 func clearScreen() {

@@ -140,3 +140,8 @@ func (b Board) NeighboursCount(c cell.Cell) int {
 func (b Board) GetWidth() int {
 	return b.width
 }
+
+// GetHight returns the hight of the board
+func (b Board) GetHight() int {
+	return b.height
+}
