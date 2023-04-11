@@ -14,11 +14,11 @@ const (
 )
 
 func main() {
-	// input keystroke without pressing enter
+	// input keystrokes without pressing enter
 	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
 	// do not display entered characters on the screen
 	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
 
 	g := game.New(BOARD_WIDTH, BOARD_HEIGHT)
-	g.Init(UPDATE_INTERVAL)
+	g.Start(UPDATE_INTERVAL)
 }

@@ -30,8 +30,8 @@ func New(width, height int) game {
 	return game{board: board.New(width, height)}
 }
 
-// Init shows the main menu and allows the user to start the game
-func (g game) Init(updateInterval time.Duration) {
+// Start starts the game, showing the main menu
+func (g game) Start(updateInterval time.Duration) {
 	clearScreen()
 
 	// get input while game is running
@@ -41,9 +41,10 @@ func (g game) Init(updateInterval time.Duration) {
 	// get the point of the currently selected cell, initially its (0,0)
 	selectedCellPoint := point.New(0, 0)
 
+	// menu loop
 	for {
 		g.board.Render()
-		g.displayInitInstructions()
+		g.displayMenuInstructions()
 
 		keyPressed := <-userInput
 
@@ -122,7 +123,7 @@ func (g game) Init(updateInterval time.Duration) {
 			clearScreen()
 
 			//restart game
-			g.board = board.New(g.board.GetWidth(), g.board.GetHight())
+			g.board = board.New(g.board.Width(), g.board.Hight())
 			selectedCellPoint = point.New(0, 0)
 			//
 
@@ -144,27 +145,28 @@ func (g game) play(updateInterval time.Duration, userInput chan byte) {
 	fmt.Println("iteration:", i)
 	fmt.Println("---------------")
 	g.board.Render()
-	g.displayInstructions()
+	g.displayGameInstructions()
 
 	for {
 		select {
 		case input := <-userInput:
 			switch input {
 			case PAUSE_CHAR:
-				runGame = !runGame // flip rungame state
+				runGame = !runGame // flip game state
+
+				// when resuming the game, render immediately, dont wait "updateInterval" until next cycle
+				if runGame {
+					i++
+					clearScreen()
+					fmt.Println("iteration:", i)
+					fmt.Println("---------------")
+
+					g.board = g.board.Update()
+					g.board.Render()
+					g.displayGameInstructions()
+				}
 			case RESTART_CHAR:
 				return
-			}
-
-			if runGame { // when resuming the game, render immediately, dont wait the "updateInterval" until next cycle
-				i++
-				clearScreen()
-				fmt.Println("iteration:", i)
-				fmt.Println("---------------")
-
-				g.board = g.board.Update()
-				g.board.Render()
-				g.displayInstructions()
 			}
 
 		case <-time.After(updateInterval):
@@ -176,7 +178,7 @@ func (g game) play(updateInterval time.Duration, userInput chan byte) {
 
 				g.board = g.board.Update()
 				g.board.Render()
-				g.displayInstructions()
+				g.displayGameInstructions()
 			}
 		}
 	}
@@ -191,8 +193,8 @@ func handleInput(input chan<- byte) {
 	}
 }
 
-func (g game) displayInitInstructions() {
-	for i := 0; i < g.board.GetWidth()*2; i++ {
+func (g game) displayMenuInstructions() {
+	for i := 0; i < g.board.Width()*2; i++ {
 		fmt.Printf("-")
 	}
 	fmt.Println()
@@ -201,8 +203,8 @@ func (g game) displayInitInstructions() {
 	fmt.Println("Use <ENTER> key to start the game")
 }
 
-func (g game) displayInstructions() {
-	for i := 0; i < g.board.GetWidth()*2; i++ {
+func (g game) displayGameInstructions() {
+	for i := 0; i < g.board.Width()*2; i++ {
 		fmt.Printf("-")
 	}
 	fmt.Println()

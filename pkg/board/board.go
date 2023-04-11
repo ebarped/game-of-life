@@ -111,11 +111,11 @@ func (b Board) IsInside(p point.Point) bool {
 	return true
 }
 
-// GetNeighboursCount returns the number of alive neighbours of a cell
+// NeighboursCount returns the number of alive neighbours of a cell
 func (b Board) NeighboursCount(c cell.Cell) int {
 	count := 0
 
-	// make an array of positions to check and loop over them
+	// array of positions to check
 	neighbourPositions := []point.Point{
 		c.Position().North(),
 		c.Position().North().East(),
@@ -136,12 +136,12 @@ func (b Board) NeighboursCount(c cell.Cell) int {
 	return count
 }
 
-// GetWidth returns the width of the board
-func (b Board) GetWidth() int {
+// Width returns the width of the board
+func (b Board) Width() int {
 	return b.width
 }
 
-// GetHight returns the hight of the board
-func (b Board) GetHight() int {
+// Hight returns the hight of the board
+func (b Board) Hight() int {
 	return b.height
 }
