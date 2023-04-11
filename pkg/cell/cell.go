@@ -10,9 +10,10 @@ const (
 	selectedCellRepr         = "▢"
 	selectedAndAliveCellRepr = "▣"
 
-	colorReset = "\033[0m"  // reset color
-	colorRed   = "\033[31m" // cell alive
-	colorGreen = "\033[32m" // cell selected
+	colorReset = "\x1b[0m"  // reset color
+	colorRed   = "\x1b[31m" // cell alive
+	colorGreen = "\x1b[32m" // cell selected
+	blink      = "\x1b[5m"  // blink effect
 )
 
 type Cell struct {

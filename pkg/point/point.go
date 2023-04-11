@@ -28,6 +28,7 @@ func (p Point) North() Point {
 		y: p.y - 1,
 	}
 }
+
 func (p Point) South() Point {
 	return Point{
 		x: p.x,

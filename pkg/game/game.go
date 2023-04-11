@@ -20,6 +20,13 @@ const (
 	ARROW_LEFT_CHAR  byte = 68
 	PAUSE_CHAR       byte = 112
 	RESTART_CHAR     byte = 114
+	QUIT_CHAR        byte = 113
+)
+
+const (
+	colorReset = "\x1b[0m"  // reset color
+	colorRed   = "\x1b[31m" // red color
+	blink      = "\x1b[5m"  // blink effect
 )
 
 type game struct {
@@ -122,11 +129,13 @@ func (g game) Start(updateInterval time.Duration) {
 			g.play(updateInterval, userInput)
 			clearScreen()
 
-			//restart game
+			// restart game
 			g.board = board.New(g.board.Width(), g.board.Hight())
 			selectedCellPoint = point.New(0, 0)
 			//
-
+		case QUIT_CHAR:
+			fmt.Println("Bye!")
+			os.Exit(0)
 		default:
 			clearScreen()
 			fmt.Printf("Unrecognized key, skipping it: %s (%d)\n", string(keyPressed), keyPressed)
@@ -136,7 +145,6 @@ func (g game) Start(updateInterval time.Duration) {
 
 // play starts the loop of the game
 func (g game) play(updateInterval time.Duration, userInput chan byte) {
-
 	runGame := true
 	i := 0
 
@@ -164,9 +172,14 @@ func (g game) play(updateInterval time.Duration, userInput chan byte) {
 					g.board = g.board.Update()
 					g.board.Render()
 					g.displayGameInstructions()
+				} else {
+					fmt.Println(string(blink) + string(colorRed) + "GAME PAUSED" + string(colorReset))
 				}
 			case RESTART_CHAR:
 				return
+			case QUIT_CHAR:
+				fmt.Println("Bye!")
+				os.Exit(0)
 			}
 
 		case <-time.After(updateInterval):
@@ -198,9 +211,10 @@ func (g game) displayMenuInstructions() {
 		fmt.Printf("-")
 	}
 	fmt.Println()
-	fmt.Println("Use <ARROW> keys to move through the board")
-	fmt.Println("Use <SPACEBAR> key to set cells to ALIVE STATUS")
-	fmt.Println("Use <ENTER> key to start the game")
+	fmt.Println("Press <ARROW> keys to move through the board")
+	fmt.Println("Press <SPACEBAR> key to set cells to ALIVE STATUS")
+	fmt.Println("Press <ENTER> key to start the game")
+	fmt.Println("Press <q> to quit the game")
 }
 
 func (g game) displayGameInstructions() {
@@ -210,6 +224,7 @@ func (g game) displayGameInstructions() {
 	fmt.Println()
 	fmt.Println("Press <p> to pause the game")
 	fmt.Println("Press <r> to restart the game")
+	fmt.Println("Press <q> to quit the game")
 }
 
 func clearScreen() {
