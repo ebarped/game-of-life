@@ -127,18 +127,18 @@ func (b Board) NeighboursCount(c cell.Cell) int {
 
 	// array of positions to check
 	neighbourPositions := []point.Point{
-		c.Position().North(),
-		c.Position().North().East(),
-		c.Position().East(),
-		c.Position().South().East(),
-		c.Position().South(),
-		c.Position().South().West(),
-		c.Position().West(),
-		c.Position().North().West(),
+		b.CalculatePosition(c.Position(), North),
+		b.CalculatePosition(c.Position(), North, East),
+		b.CalculatePosition(c.Position(), East),
+		b.CalculatePosition(c.Position(), South, East),
+		b.CalculatePosition(c.Position(), South),
+		b.CalculatePosition(c.Position(), South, West),
+		b.CalculatePosition(c.Position(), West),
+		b.CalculatePosition(c.Position(), North, West),
 	}
 
 	for _, pos := range neighbourPositions {
-		if b.IsInside(pos) && b.GetCell(pos).IsAlive() {
+		if b.GetCell(pos).IsAlive() {
 			count++
 		}
 	}
@@ -151,7 +151,42 @@ func (b Board) Width() int {
 	return b.width
 }
 
-// Hight returns the hight of the board
-func (b Board) Hight() int {
+// Height returns the height of the board
+func (b Board) Height() int {
 	return b.height
+}
+
+// CalculatePosition returns the final position of applying all the "dir"
+// Directions to the "initialPos" position, accounting that the board is infinite
+func (b Board) CalculatePosition(initialPos point.Point, dirs ...Direction) point.Point {
+	actualPos := initialPos
+
+	for _, dir := range dirs {
+		switch dir {
+		case North:
+			actualPos = actualPos.North()
+			if !b.IsInside(actualPos) {
+				actualPos = point.New(actualPos.GetX(), b.height-1)
+			}
+		case East:
+			actualPos = actualPos.East()
+			if !b.IsInside(actualPos) {
+				actualPos = point.New(0, actualPos.GetY())
+			}
+		case South:
+			actualPos = actualPos.South()
+			if !b.IsInside(actualPos) {
+				actualPos = point.New(actualPos.GetX(), 0)
+			}
+		case West:
+			actualPos = actualPos.West()
+			if !b.IsInside(actualPos) {
+				actualPos = point.New(b.width-1, actualPos.GetY())
+			}
+		default:
+			panic("this direction is not contemplated!")
+		}
+	}
+
+	return actualPos
 }

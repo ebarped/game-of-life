@@ -1,7 +1,6 @@
 package game
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -64,25 +63,13 @@ func (g game) Start(updateInterval time.Duration) {
 			input := <-g.userInput
 			switch input {
 			case ARROW_UP_CHAR:
-				err := g.moveSelectedCell(board.North)
-				if err != nil { // we are moving outside the board
-					break
-				}
+				g.moveSelectedCell(board.North)
 			case ARROW_DOWN_CHAR:
-				err := g.moveSelectedCell(board.South)
-				if err != nil { // we are moving outside the board
-					break
-				}
+				g.moveSelectedCell(board.South)
 			case ARROW_RIGHT_CHAR:
-				err := g.moveSelectedCell(board.East)
-				if err != nil { // we are moving outside the board
-					break
-				}
+				g.moveSelectedCell(board.East)
 			case ARROW_LEFT_CHAR:
-				err := g.moveSelectedCell(board.West)
-				if err != nil { // we are moving outside the board
-					break
-				}
+				g.moveSelectedCell(board.West)
 			default:
 				fmt.Println("error: key not recognized:", input)
 			}
@@ -207,35 +194,16 @@ func clearScreen() {
 }
 
 // moveSelectedCell moves the selected cell in the "dir" direction
-func (g *game) moveSelectedCell(dir board.Direction) error {
-	var newSelectedPoint point.Point
-	switch dir {
-	case board.North:
-		newSelectedPoint = g.selectedCellPoint.North()
-	case board.East:
-		newSelectedPoint = g.selectedCellPoint.East()
-	case board.South:
-		newSelectedPoint = g.selectedCellPoint.South()
-	case board.West:
-		newSelectedPoint = g.selectedCellPoint.West()
-	default:
-		panic("this direction is not contemplated!")
-	}
-
-	if !g.board.IsInside(newSelectedPoint) {
-		return errors.New("the destination cell is outside of the board!")
-	}
-
+func (g *game) moveSelectedCell(dir board.Direction) {
+	newSelectedPoint := g.board.CalculatePosition(g.selectedCellPoint, dir)
 	g.changeCellSelectStatus(g.selectedCellPoint, false)
 	g.selectedCellPoint = newSelectedPoint
 	g.changeCellSelectStatus(g.selectedCellPoint, true)
-
-	return nil
 }
 
 // restart restarts the initial conditions of the game
 func (g *game) restart() {
-	g.board = board.New(g.board.Width(), g.board.Hight())
+	g.board = board.New(g.board.Width(), g.board.Height())
 	g.selectedCellPoint = point.New(0, 0)
 }
 
