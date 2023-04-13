@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -30,11 +31,17 @@ const (
 )
 
 type game struct {
-	board board.Board
+	board             board.Board
+	userInput         chan byte
+	selectedCellPoint point.Point
 }
 
 func New(width, height int) game {
-	return game{board: board.New(width, height)}
+	return game{
+		board:             board.New(width, height),
+		userInput:         make(chan byte),
+		selectedCellPoint: point.New(0, 0),
+	}
 }
 
 // Start starts the game, showing the main menu
@@ -42,78 +49,46 @@ func (g game) Start(updateInterval time.Duration) {
 	clearScreen()
 
 	// get input while game is running
-	userInput := make(chan byte)
-	go handleInput(userInput)
-
-	// get the point of the currently selected cell, initially its (0,0)
-	selectedCellPoint := point.New(0, 0)
+	go g.handleInput()
 
 	// menu loop
 	for {
 		g.board.Render()
 		g.displayMenuInstructions()
 
-		keyPressed := <-userInput
+		keyPressed := <-g.userInput
 
 		switch keyPressed {
 		case ESCAPE_CHAR:
-			_ = <-userInput // skip the ] char
-			input := <-userInput
+			_ = <-g.userInput // skip the ] char
+			input := <-g.userInput
 			switch input {
 			case ARROW_UP_CHAR:
-				newSelectedPoint := selectedCellPoint.North()
-				if !g.board.IsInside(newSelectedPoint) {
+				err := g.moveSelectedCell(board.North)
+				if err != nil { // we are moving outside the board
 					break
 				}
-				c := g.board.GetCell(selectedCellPoint)
-				c.SetSelected(false)
-				g.board.SetCell(c.Position(), c)
-				selectedCellPoint = newSelectedPoint
-				c = g.board.GetCell(selectedCellPoint)
-				c.SetSelected(true)
-				g.board.SetCell(c.Position(), c)
 			case ARROW_DOWN_CHAR:
-				newSelectedPoint := selectedCellPoint.South()
-				if !g.board.IsInside(newSelectedPoint) {
+				err := g.moveSelectedCell(board.South)
+				if err != nil { // we are moving outside the board
 					break
 				}
-				c := g.board.GetCell(selectedCellPoint)
-				c.SetSelected(false)
-				g.board.SetCell(c.Position(), c)
-				selectedCellPoint = newSelectedPoint
-				c = g.board.GetCell(selectedCellPoint)
-				c.SetSelected(true)
-				g.board.SetCell(c.Position(), c)
 			case ARROW_RIGHT_CHAR:
-				newSelectedPoint := selectedCellPoint.East()
-				if !g.board.IsInside(newSelectedPoint) {
+				err := g.moveSelectedCell(board.East)
+				if err != nil { // we are moving outside the board
 					break
 				}
-				c := g.board.GetCell(selectedCellPoint)
-				c.SetSelected(false)
-				g.board.SetCell(c.Position(), c)
-				selectedCellPoint = newSelectedPoint
-				c = g.board.GetCell(selectedCellPoint)
-				c.SetSelected(true)
-				g.board.SetCell(c.Position(), c)
 			case ARROW_LEFT_CHAR:
-				newSelectedPoint := selectedCellPoint.West()
-				if !g.board.IsInside(newSelectedPoint) {
+				err := g.moveSelectedCell(board.West)
+				if err != nil { // we are moving outside the board
 					break
 				}
-				c := g.board.GetCell(selectedCellPoint)
-				c.SetSelected(false)
-				g.board.SetCell(c.Position(), c)
-				selectedCellPoint = newSelectedPoint
-				c = g.board.GetCell(selectedCellPoint)
-				c.SetSelected(true)
-				g.board.SetCell(c.Position(), c)
 			default:
 				fmt.Println("error: key not recognized:", input)
 			}
 			clearScreen()
 		case SPACEBAR_CHAR:
-			c := g.board.GetCell(selectedCellPoint)
+			c := g.board.GetCell(g.selectedCellPoint)
 			if c.IsAlive() {
 				c.SetAlive(false)
 			} else {
@@ -122,17 +97,12 @@ func (g game) Start(updateInterval time.Duration) {
 			g.board.SetCell(c.Position(), c)
 			clearScreen()
 		case ENTER_CHAR:
-			c := g.board.GetCell(selectedCellPoint)
-			c.SetSelected(false)
-			g.board.SetCell(c.Position(), c)
+			g.changeCellSelectStatus(g.selectedCellPoint, false)
 
-			g.play(updateInterval, userInput)
+			g.play(updateInterval, g.userInput)
+
 			clearScreen()
-
-			// restart game
-			g.board = board.New(g.board.Width(), g.board.Hight())
-			selectedCellPoint = point.New(0, 0)
-			//
+			g.restart()
 		case QUIT_CHAR:
 			fmt.Println("Bye!")
 			os.Exit(0)
@@ -197,15 +167,16 @@ func (g game) play(updateInterval time.Duration, userInput chan byte) {
 	}
 }
 
-// handleInput is intented to run as goroutine to catch the user input (pause or restart)
-func handleInput(input chan<- byte) {
+// handleInput is intented to run as goroutine to catch the user input
+func (g game) handleInput() {
 	for {
 		keyPressed := make([]byte, 1)
 		os.Stdin.Read(keyPressed)
-		input <- keyPressed[0]
+		g.userInput <- keyPressed[0]
 	}
 }
 
+// displayMenuInstructions displays the instructions of the menu
 func (g game) displayMenuInstructions() {
 	for i := 0; i < g.board.Width()*2; i++ {
 		fmt.Printf("-")
@@ -217,6 +188,7 @@ func (g game) displayMenuInstructions() {
 	fmt.Println("Press <q> to quit the game")
 }
 
+// displayGameInstructions displays the instructions of the running game
 func (g game) displayGameInstructions() {
 	for i := 0; i < g.board.Width()*2; i++ {
 		fmt.Printf("-")
@@ -227,8 +199,49 @@ func (g game) displayGameInstructions() {
 	fmt.Println("Press <q> to quit the game")
 }
 
+// clearScreen clears the screen (unix terminals only)
 func clearScreen() {
 	c := exec.Command("clear")
 	c.Stdout = os.Stdout
 	c.Run()
+}
+
+// moveSelectedCell moves the selected cell in the "dir" direction
+func (g *game) moveSelectedCell(dir board.Direction) error {
+	var newSelectedPoint point.Point
+	switch dir {
+	case board.North:
+		newSelectedPoint = g.selectedCellPoint.North()
+	case board.East:
+		newSelectedPoint = g.selectedCellPoint.East()
+	case board.South:
+		newSelectedPoint = g.selectedCellPoint.South()
+	case board.West:
+		newSelectedPoint = g.selectedCellPoint.West()
+	default:
+		panic("this direction is not contemplated!")
+	}
+
+	if !g.board.IsInside(newSelectedPoint) {
+		return errors.New("the destination cell is outside of the board!")
+	}
+
+	g.changeCellSelectStatus(g.selectedCellPoint, false)
+	g.selectedCellPoint = newSelectedPoint
+	g.changeCellSelectStatus(g.selectedCellPoint, true)
+
+	return nil
+}
+
+// restart restarts the initial conditions of the game
+func (g *game) restart() {
+	g.board = board.New(g.board.Width(), g.board.Hight())
+	g.selectedCellPoint = point.New(0, 0)
+}
+
+// changeCellSelectStatus changes the selected status of the cell in position "p" to the "status"
+func (g *game) changeCellSelectStatus(p point.Point, status bool) {
+	c := g.board.GetCell(g.selectedCellPoint)
+	c.SetSelected(status)
+	g.board.SetCell(c.Position(), c)
 }

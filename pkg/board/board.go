@@ -7,6 +7,15 @@ import (
 	"github.com/ebarped/game-of-life/pkg/point"
 )
 
+type Direction int
+
+const (
+	North Direction = iota
+	East
+	South
+	West
+)
+
 type Board struct {
 	width  int
 	height int
@@ -94,6 +103,7 @@ func (b Board) SetCell(p point.Point, c cell.Cell) {
 }
 
 // GetCell returns a pointer to a cell
+// THIS SHOULD CHECK EXISTENCE OF THE CELL?
 func (b Board) GetCell(p point.Point) cell.Cell {
 	return b.cells[p]
 }

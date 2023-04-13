@@ -3,6 +3,7 @@ Game of Life implementation in Go using stdlib only.
 
 ## TODO
 - "infinite board"
+- multi-platform (windows/macOS)
 
 ## Inner working
 - **main goroutine**: will display the initial menu and the game
